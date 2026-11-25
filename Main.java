@@ -12,9 +12,16 @@ public class Main {
             list.add(new process(sc.next(), sc.nextInt(), sc.nextInt(), sc.nextInt()));
         System.out.print("Context switch time: ");
         int cs = sc.nextInt();
+        System.out.print("Quantum: ");
+        int q = sc.nextInt();
 
+        // SJF
         SJF sjf = new SJF(list, cs);
         sjf.run();
         sjf.printResults();
+
+        // ACS
+        process[] arr = list.toArray(new process[0]);
+        ACS.run(arr, q, cs);
     }
 }
