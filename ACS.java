@@ -3,7 +3,6 @@ import java.util.*;
 public class ACS {
 
     public static void run(process[] input, int q, int cs) {
-        if (q <= 0) throw new IllegalArgumentException("Quantum must be positive");
         if (cs < 0) throw new IllegalArgumentException("Context Switching cannot be negative");
 
         process[] arr = new process[input.length];
@@ -14,18 +13,14 @@ public class ACS {
         process[] arrivals = arr.clone();
         Arrays.sort(arrivals, Comparator.comparingInt(process::getArrivalTime));
 
-        Queue<process> t1 = new LinkedList<>();
+        Tier1 t1 = new Tier1(q);
         Tier2 t2 = new Tier2();
 
         int time = 0, nextArrival = 0, done = 0;
         process last = null;
 
         while (done < arrivals.length) {
-            while (nextArrival < arrivals.length && arrivals[nextArrival].getArrivalTime() <= time) {
-                process arrP = arrivals[nextArrival++];
-                t1.add(arrP);
-                System.out.println(arrP.getName() + " arrived at time " + arrP.getArrivalTime());
-            }
+            nextArrival = enqueueArrivals(arrivals, nextArrival, time, t1);
 
             if (t1.isEmpty() && t2.isEmpty()) {
                 System.out.println("Time " + time + ": CPU is IDLE");
@@ -46,35 +41,32 @@ public class ACS {
 
             if (last != null && p != last && cs > 0) {
                 for (int i = 0; i < cs; i++) {
-                    while (nextArrival < arrivals.length && arrivals[nextArrival].getArrivalTime() <= time) {
-                        process arrP = arrivals[nextArrival++];
-                        t1.add(arrP);
-                        System.out.println(arrP.getName() + " arrived at time " + arrP.getArrivalTime());
-                    }
+                    nextArrival = enqueueArrivals(arrivals, nextArrival, time, t1);
                     System.out.println("Time " + time + ": CONTEXT SWITCH");
-                    System.out.println("Tier 1: " + Tier1.queueState(t1));
+                    System.out.println("Tier 1: " + t1.state());
                     System.out.println("Tier 2: " + t2.state());
                     time++;
                 }
-                while (nextArrival < arrivals.length && arrivals[nextArrival].getArrivalTime() <= time) {
-                    process arrP = arrivals[nextArrival++];
-                    t1.add(arrP);
-                    System.out.println(arrP.getName() + " arrived at time " + arrP.getArrivalTime());
+                nextArrival = enqueueArrivals(arrivals, nextArrival, time, t1);
+
+                fromTier1 = !t1.isEmpty();
+                if (fromTier1) {
+                    idx = -1;
+                    p = t1.peek();
+                } else {
+                    idx = t2.pickIndex(time);
+                    p = t2.get(idx);
                 }
             }
 
             if (fromTier1) t1.poll();
             else t2.remove(idx);
 
-            int runUnits = fromTier1 ? Math.min(q, p.getRemainingTime()) : p.getRemainingTime();
+            int runUnits = fromTier1 ? t1.getRunUnits(p) : p.getRemainingTime();
 
             System.out.println("\n" + p.getName() + " runs from " + time + " to " + (time + runUnits));
             for (int i = 0; i < runUnits; i++) {
-                while (nextArrival < arrivals.length && arrivals[nextArrival].getArrivalTime() <= time) {
-                    process arrP = arrivals[nextArrival++];
-                    t1.add(arrP);
-                    System.out.println(arrP.getName() + " arrived at time " + arrP.getArrivalTime());
-                }
+                nextArrival = enqueueArrivals(arrivals, nextArrival, time, t1);
                 System.out.println("Time " + time + " | Running: " + p.getName());
                 p.runOneUnit(time);
                 time++;
@@ -90,12 +82,21 @@ public class ACS {
                 System.out.println(p.getName() + " moved to Tier 2 | Remaining: " + p.getRemainingTime());
             }
 
-            System.out.println("Tier 1: " + Tier1.queueState(t1));
+            System.out.println("Tier 1: " + t1.state());
             System.out.println("Tier 2: " + t2.state());
             System.out.println("--------------------------------");
         }
 
         printResults(arr);
+    }
+
+    private static int enqueueArrivals(process[] arrivals, int nextArrival, int time, Tier1 t1) {
+        while (nextArrival < arrivals.length && arrivals[nextArrival].getArrivalTime() <= time) {
+            process arrP = arrivals[nextArrival++];
+            t1.add(arrP);
+            System.out.println(arrP.getName() + " arrived at time " + arrP.getArrivalTime());
+        }
+        return nextArrival;
     }
 
     static void printResults(process[] arr) {
