@@ -33,6 +33,7 @@ public class SJF {
 
             if (next == null) {                    // nothing ready -> CPU idle
                 steps.add(new Step(time, "IDLE", "[Empty]"));
+                last = null;
                 time++;
                 continue;
             }
