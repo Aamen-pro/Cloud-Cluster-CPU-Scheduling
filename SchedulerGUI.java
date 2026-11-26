@@ -356,6 +356,11 @@ public class SchedulerGUI extends JFrame {
             acsRes.snaps.add(sn);
         }
 
+        for (Result res : new Result[]{sjfRes, acsRes}) {
+            Snap end = new Snap();
+            end.time = res.total; end.event = "DONE";
+            res.snaps.add(end);
+        }
         for (Result res : new Result[]{sjfRes, acsRes}) finishResult(res, list);
 
         chipTc.setText("Test case: " + testName);
@@ -376,6 +381,7 @@ public class SchedulerGUI extends JFrame {
         GanttPanel.Seg open = null;
         String curLabel = null; int start = 0;
         for (Snap s : res.snaps) {
+            if (s.event.equals("DONE")) continue;
             if (burst.containsKey(s.event)) {
                 int d = done.getOrDefault(s.event, 0);
                 s.runningRem = burst.get(s.event) - d;
@@ -479,6 +485,7 @@ public class SchedulerGUI extends JFrame {
         List<Chip> cpu = new ArrayList<>();
         if (s.event.equals("CS")) cpuChips.setText("context switch");
         else if (s.event.equals("IDLE")) cpuChips.setText("idle");
+        else if (s.event.equals("DONE")) cpuChips.setText("finished");
         else {
             cpu.add(new Chip(s.event, s.runningRem, NONE));
         }
