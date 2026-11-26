@@ -1,4 +1,3 @@
-
 import java.util.*;
 
 public class Tier1{
@@ -17,7 +16,7 @@ public class Tier1{
             );
         }
 
-        Arrays.sort( arrivals, Comparator.comparingInt(p -> p.at) );
+        Arrays.sort( arrivals, Comparator.comparingInt(p -> p.getArrivalTime()));
 
         Queue<process> tier1 = new LinkedList<>();
         List<process> tier2 = new ArrayList<>();
@@ -29,12 +28,12 @@ public class Tier1{
 
         while (nextArrival < arrivals.length || !tier1.isEmpty()) {
 
-            while (nextArrival < arrivals.length && arrivals[nextArrival].at <= currentTime) {
+            while (nextArrival < arrivals.length && arrivals[nextArrival].getArrivalTime() <= currentTime) {
 
                 process p = arrivals[nextArrival];
                 tier1.add(p);
 
-                System.out.println(p.name + " arrived at time " + p.at);
+                System.out.println(p.getName() + " arrived at time " + p.getArrivalTime());
 
                 nextArrival++;
             }
@@ -48,10 +47,10 @@ public class Tier1{
             }
             if (previousExecution && contextSwitch > 0) {
                 for (int i = 0; i < contextSwitch; i++) {
-                    while (nextArrival < arrivals.length && arrivals[nextArrival].at <= currentTime) {
+                    while (nextArrival < arrivals.length && arrivals[nextArrival].getArrivalTime() <= currentTime) {
                         process p = arrivals[nextArrival];
                         tier1.add(p);
-                        System.out.println(p.name + " arrived at time " + p.at);
+                        System.out.println(p.getName() + " arrived at time " + p.getArrivalTime());
                         nextArrival++;
                     }
 
@@ -70,13 +69,13 @@ public class Tier1{
                     currentTime++;
                 }
             }
-            while (nextArrival < arrivals.length && arrivals[nextArrival].at <= currentTime) {
+            while (nextArrival < arrivals.length && arrivals[nextArrival].getArrivalTime() <= currentTime) {
                 process p = arrivals[nextArrival];
 
                 tier1.add(p);
 
                 System.out.println(
-                    p.name + " arrived at time " + p.at
+                    p.getName() + " arrived at time " + p.getArrivalTime()
                 );
 
                 nextArrival++;
@@ -84,44 +83,44 @@ public class Tier1{
 
             process curr = tier1.poll();
 
-            int executionTime = Math.min( quantum,curr.remainingTime );
+            int executionTime = Math.min( quantum,curr.getRemainingTime() );
 
-            if (curr.firstStartTime == -1) {
-                curr.firstStartTime = currentTime;
+            if (curr.getStartTime() == -1) {
+                curr.setStartTime(currentTime);
             }
 
-            System.out.println( "\n" + curr.name + " runs from " + currentTime + " to " + (currentTime + executionTime));
+            System.out.println( "\n" + curr.getName() + " runs from " + currentTime + " to " + (currentTime + executionTime));
 
             for (int i = 0; i < executionTime; i++) {
 
-                while (nextArrival < arrivals.length && arrivals[nextArrival].at <= currentTime) {
+                while (nextArrival < arrivals.length && arrivals[nextArrival].getArrivalTime() <= currentTime) {
                     process p = arrivals[nextArrival];
                     tier1.add(p);
                     System.out.println(
-                        p.name + " arrived at time " + p.at
+                        p.getName() + " arrived at time " + p.getArrivalTime()
                     );
 
                     nextArrival++;
                 }
 
-                System.out.println( "Time " + currentTime + " | Running: " + curr.name );
+                System.out.println( "Time " + currentTime + " | Running: " + curr.getName() );
 
-                curr.remainingTime--;
+                curr.setRemainingTime(curr.getRemainingTime() - 1);
                 currentTime++;
             }
 
             previousExecution = true;
 
-            if (curr.remainingTime == 0) {
+            if (curr.getRemainingTime() == 0) {
 
-                curr.finishTime = currentTime;
+                curr.setFinishTime(currentTime);
 
-                System.out.println( curr.name + " finished at " + currentTime );
+                System.out.println( curr.getName() + " finished at " + currentTime );
 
             } else {
 
                 tier2.add(curr); 
-                System.out.println( curr.name + " moved to Tier 2" + " | Remaining: " + curr.remainingTime );
+                System.out.println( curr.getName() + " moved to Tier 2" + " | Remaining: " + curr.getRemainingTime() );
             }
 
             System.out.println( "Tier 1: " + queueState(tier1));
@@ -139,7 +138,7 @@ public class Tier1{
     static String queueState(Queue<process> queue) {
         StringJoiner result = new StringJoiner(", ", "[", "]");
         for (process p : queue) {
-            result.add(p.name + "(remaining: " + p.remainingTime + ", Priority: " + p.priority + ")");
+            result.add(p.getName() + "(remaining: " + p.getRemainingTime() + ", Priority: " + p.getPriority() + ")");
         }
 
         return result.toString();
@@ -153,7 +152,7 @@ public class Tier1{
 
         for (process p : processes) {
 
-            result.add( p.name + "(remaining: " + p.remainingTime + ", Priority: " + p.priority + ")" );
+            result.add( p.getName() + "(remaining: " + p.getRemainingTime() + ", Priority: " + p.getPriority() + ")" );
         }
 
         return result.toString();
@@ -162,13 +161,14 @@ public class Tier1{
 
     public static void main(String[] args) {
 
+        // process constructor order: (name, arrivalTime, burstTime, priority)
         process[] processes = {
 
-            new process("P1", 4, 0, 2),
+            new process("P1", 0, 4, 2),
 
-            new process("P2", 7, 1, 3),
+            new process("P2", 1, 7, 3),
 
-            new process("P3", 2, 3, 1)
+            new process("P3", 3, 2, 1)
         };
 
         List<process> demoted = roundRobin(
@@ -182,9 +182,9 @@ public class Tier1{
         for (process p : demoted) {
 
             System.out.println(
-                p.name
-                + " | Remaining: " + p.remainingTime
-                + " | Priority: " + p.priority
+                p.getName()
+                + " | Remaining: " + p.getRemainingTime()
+                + " | Priority: " + p.getPriority()
             );
         }
     }
