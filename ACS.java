@@ -2,7 +2,21 @@ import java.util.*;
 
 public class ACS {
 
+    public static class Step {
+        public final int time;
+        public final String event;      // process name, "CS" or "IDLE"
+        public final String tier1;
+        public final String tier2;
+        Step(int time, String event, String tier1, String tier2) {
+            this.time = time; this.event = event; this.tier1 = tier1; this.tier2 = tier2;
+        }
+    }
+
     public static process[] run(process[] input, int q, int cs) {
+        return run(input, q, cs, null);
+    }
+
+    public static process[] run(process[] input, int q, int cs, List<Step> trace) {
         if (cs < 0) throw new IllegalArgumentException("Context Switching cannot be negative");
 
         process[] arr = new process[input.length];
@@ -24,6 +38,7 @@ public class ACS {
 
             if (t1.isEmpty() && t2.isEmpty()) {
                 System.out.println("Time " + time + ": CPU is IDLE");
+                if (trace != null) trace.add(new Step(time, "IDLE", t1.state(), t2.state()));
                 last = null;
                 time++;
                 continue;
@@ -43,6 +58,7 @@ public class ACS {
                 for (int i = 0; i < cs; i++) {
                     nextArrival = enqueueArrivals(arrivals, nextArrival, time, t1);
                     System.out.println("Time " + time + ": CONTEXT SWITCH");
+                    if (trace != null) trace.add(new Step(time, "CS", t1.state(), t2.state()));
                     System.out.println("Tier 1: " + t1.state());
                     System.out.println("Tier 2: " + t2.state());
                     time++;
@@ -68,6 +84,7 @@ public class ACS {
             for (int i = 0; i < runUnits; i++) {
                 nextArrival = enqueueArrivals(arrivals, nextArrival, time, t1);
                 System.out.println("Time " + time + " | Running: " + p.getName());
+                if (trace != null) trace.add(new Step(time, p.getName(), t1.state(), t2.state()));
                 p.runOneUnit(time);
                 time++;
             }
