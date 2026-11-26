@@ -2,7 +2,7 @@ import java.util.*;
 
 public class ACS {
 
-    public static void run(process[] input, int q, int cs) {
+    public static process[] run(process[] input, int q, int cs) {
         if (cs < 0) throw new IllegalArgumentException("Context Switching cannot be negative");
 
         process[] arr = new process[input.length];
@@ -88,6 +88,7 @@ public class ACS {
         }
 
         printResults(arr);
+        return arr;
     }
 
     private static int enqueueArrivals(process[] arrivals, int nextArrival, int time, Tier1 t1) {
